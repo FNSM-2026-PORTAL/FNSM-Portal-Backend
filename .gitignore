@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+
+# TypeScript compilado
+dist/
+
+# Variables de entorno (¡nunca subir al repo!)
+.env
+.env.local
+.env.production
+
+# Uploads del usuario (archivos subidos por usuarios)
+Uploads/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage / tests
+coverage/
