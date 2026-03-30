@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
+import authRoutes from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -19,6 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
     res.json({ message: "API Working" });
 });
+
+app.use("/api/auth", authRoutes);
 
 if (!process.env.MONGODB_URI) {
     throw new Error("Please provide a MongoDB URI");
