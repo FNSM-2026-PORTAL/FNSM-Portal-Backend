@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { mongoClient } from "../server";
 import { User } from "../models/User";
+import { verifyToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -110,5 +111,6 @@ router.post("/login", async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error interno del servidor" });
     }
 });
+
 
 export default router;
