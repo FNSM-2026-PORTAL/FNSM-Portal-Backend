@@ -9,4 +9,7 @@ export interface User {
     password: string;
     role: Role;
     createdAt: Date;
+    profileImage?: string;
+    resetCode?: string;
+    resetCodeExpires?: Date;
 }
