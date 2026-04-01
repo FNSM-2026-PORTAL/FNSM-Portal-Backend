@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { mongoClient } from "../server";
 import { User } from "../models/User";
-import { verifyToken } from "../middleware/auth";
+import { verifyToken, AuthRequest } from "../middleware/auth";
+import { ObjectId } from "mongodb";
 
 const router = Router();
 
@@ -112,5 +113,36 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 });
 
+
+router.get("/me", verifyToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        
+        if (!userId) {
+            res.status(401).json({ message: "Usuario no autenticado" });
+            return;
+        }
+
+        const collection = getCollection();
+        const user = await collection.findOne({ _id: new ObjectId(userId) });
+
+        if (!user) {
+            res.status(404).json({ message: "Usuario no encontrado" });
+            return;
+        }
+
+        res.status(200).json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            }
+        });
+    } catch (error) {
+        console.error("Error al obtener perfil:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
 
 export default router;
