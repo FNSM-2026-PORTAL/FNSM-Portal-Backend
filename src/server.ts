@@ -63,7 +63,14 @@ if (!process.env.MONGODB_URI) {
   throw new Error("Please provide a MongoDB URI");
 }
 
-export const mongoClient = new MongoClient(process.env.MONGODB_URI);
+export const mongoClient = new MongoClient(process.env.MONGODB_URI, {
+    ssl: true,
+    tls: true,
+    tlsAllowInvalidCertificates: true,
+    tlsAllowInvalidHostnames: true,
+    connectTimeoutMS: 30000,
+    serverSelectionTimeoutMS: 30000
+});
 
 async function start() {
   try {
