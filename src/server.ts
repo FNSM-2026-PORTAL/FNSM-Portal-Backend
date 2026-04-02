@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import webhookRoutes from "./routes/webhook.routes";
 import postRoutes from "./routes/post.routes";
+import planRoutes from "./routes/plan.routes";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/plans", planRoutes);
 
 if (!process.env.MONGODB_URI) {
     throw new Error("Please provide a MongoDB URI");

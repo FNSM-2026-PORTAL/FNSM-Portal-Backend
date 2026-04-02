@@ -47,7 +47,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req: Request,
 
             if (amount_total === 5000) {
                 plan = "plata";
-            } else if (amount_total === 15000) {
+            } else if (amount_total === 7500) {
                 plan = "oro";
             }
 
