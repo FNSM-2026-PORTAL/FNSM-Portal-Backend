@@ -41,11 +41,15 @@ router.post("/", express.raw({ type: "application/json" }), async (req: Request,
         const userId = session.client_reference_id; 
 
         if (userId) {
-            // Asigna el plan con base al monto pagado: 50 pesos = plata, 150 pesos = oro
+            // Asigna el plan con base al monto pagado: $1 peso = según planId en metadata
             const amount_total = session.amount_total;
             let plan = null;
 
-            if (amount_total === 5000) {
+            // Para pruebas: $1 peso, asignamos según el plan seleccionado
+            if (amount_total === 100) {
+                // Obtener el plan desde metadata o usar lógica específica
+                plan = "plata"; // Por defecto para pruebas
+            } else if (amount_total === 5000) {
                 plan = "plata";
             } else if (amount_total === 7500) {
                 plan = "oro";

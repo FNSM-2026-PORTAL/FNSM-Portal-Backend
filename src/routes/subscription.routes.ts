@@ -15,8 +15,8 @@ const getStripe = () => {
 };
 
 const PLAN_PRICES = {
-    plata: 50 * 100,
-    oro: 75 * 100
+    plata: 1 * 100,  // $1 peso
+    oro: 1 * 100     // $1 peso
 };
 
 router.post("/create-checkout-session", verifyToken, async (req: AuthRequest, res: Response) => {

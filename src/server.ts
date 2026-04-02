@@ -51,7 +51,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (req, res) => {
-  res.json({ message: "API Working" });
+  res.json({ 
+    message: "API Working", 
+    timestamp: new Date().toISOString(),
+    status: "healthy"
+  });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "healthy",
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.use("/api/auth", authRoutes);
@@ -68,8 +79,11 @@ export const mongoClient = new MongoClient(process.env.MONGODB_URI, {
     tls: true,
     tlsAllowInvalidCertificates: true,
     tlsAllowInvalidHostnames: true,
-    connectTimeoutMS: 30000,
-    serverSelectionTimeoutMS: 30000
+    connectTimeoutMS: 10000,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 20000,
+    maxPoolSize: 10,
+    minPoolSize: 1
 });
 
 async function start() {
