@@ -12,4 +12,6 @@ export interface User {
     profileImage?: string;
     resetCode?: string;
     resetCodeExpires?: Date;
+    plan?: "free" | "plata" | "oro";
+    hasLifetimeAccess?: boolean;
 }

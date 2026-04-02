@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
 import path from "path";
 import authRoutes from "./routes/auth.routes";
+import subscriptionRoutes from "./routes/subscription.routes";
+import webhookRoutes from "./routes/webhook.routes";
+import postRoutes from "./routes/post.routes";
 
 dotenv.config();
 
@@ -18,10 +21,10 @@ app.use(cors({
     credentials: true,
 }));
 
+app.use("/api/webhook", webhookRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files from the uploads directory
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (req, res) => {
@@ -29,6 +32,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/posts", postRoutes);
 
 if (!process.env.MONGODB_URI) {
     throw new Error("Please provide a MongoDB URI");

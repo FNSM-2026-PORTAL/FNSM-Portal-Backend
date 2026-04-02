@@ -41,6 +41,8 @@ router.post("/register", async (req: Request, res: Response) => {
             password: hashedPassword,
             role: "user",
             createdAt: new Date(),
+            plan: "free",
+            hasLifetimeAccess: false
         };
 
         const result = await collection.insertOne(newUser);
@@ -60,6 +62,8 @@ router.post("/register", async (req: Request, res: Response) => {
                 email: newUser.email,
                 role: newUser.role,
                 profileImage: newUser.profileImage,
+                plan: newUser.plan,
+                hasLifetimeAccess: newUser.hasLifetimeAccess,
             },
         });
 
@@ -108,6 +112,8 @@ router.post("/login", async (req: Request, res: Response) => {
                 email: user.email,
                 role: user.role,
                 profileImage: user.profileImage,
+                plan: user.plan || "free",
+                hasLifetimeAccess: user.hasLifetimeAccess || false,
             },
         });
 
@@ -142,6 +148,8 @@ router.get("/me", verifyToken, async (req: AuthRequest, res: Response) => {
                 email: user.email,
                 role: user.role,
                 profileImage: user.profileImage,
+                plan: user.plan || "free",
+                hasLifetimeAccess: user.hasLifetimeAccess || false,
             }
         });
     } catch (error) {
