@@ -172,15 +172,24 @@ router.post("/changeImage", verifyToken, upload.single("image"), async (req: Aut
             return;
         }
 
-        const imageUrl = `/uploads/${req.file.filename}`;
+        // Subir a Cloudinary
+        const cloudinary = require('../config/cloudinary');
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'profile-images',
+            transformation: [
+                { width: 500, height: 500, crop: 'fill' }
+            ]
+        });
+
+        const imageUrl = result.secure_url;
         const collection = getCollection();
 
-        const result = await collection.updateOne(
+        const updateResult = await collection.updateOne(
             { _id: new ObjectId(userId) },
             { $set: { profileImage: imageUrl } }
         );
 
-        if (result.matchedCount === 0) {
+        if (updateResult.matchedCount === 0) {
             res.status(404).json({ message: "Usuario no encontrado" });
             return;
         }

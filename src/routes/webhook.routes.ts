@@ -16,7 +16,7 @@ const getStripe = () => {
     return stripe;
 };
 
-// Express raw body parser ONLY for Stripe validation.
+
 router.post("/", express.raw({ type: "application/json" }), async (req: Request, res: Response) => {
     const signature = req.headers["stripe-signature"] as string;
 
@@ -24,7 +24,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req: Request,
 
     try {
         event = getStripe().webhooks.constructEvent(
-            req.body, // This is the raw buffer from express.raw()
+            req.body,
             signature,
             process.env.STRIPE_WEBHOOK_SECRET || ""
         );
@@ -37,18 +37,14 @@ router.post("/", express.raw({ type: "application/json" }), async (req: Request,
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        // Recuperamos el userId que inyectamos antes del pago
         const userId = session.client_reference_id; 
 
         if (userId) {
-            // Asigna el plan con base al monto pagado: $10 pesos = según planId en metadata
             const amount_total = session.amount_total;
             let plan = null;
 
-            // Para pruebas: $10 pesos, asignamos según el plan seleccionado
             if (amount_total === 1000) {
-                // Obtener el plan desde metadata o usar lógica específica
-                plan = "plata"; // Por defecto para pruebas
+                plan = "plata";
             } else if (amount_total === 5000) {
                 plan = "plata";
             } else if (amount_total === 7500) {
