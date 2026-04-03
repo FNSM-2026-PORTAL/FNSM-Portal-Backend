@@ -7,6 +7,7 @@ import { verifyToken, AuthRequest } from "../middleware/auth";
 import { ObjectId } from "mongodb";
 import { upload } from "../middleware/upload";
 import nodemailer from "nodemailer";
+import cloudinary from "../config/cloudinary";
 
 const router = Router();
 
@@ -172,7 +173,6 @@ router.post("/changeImage", verifyToken, upload.single("image"), async (req: Aut
             return;
         }
 
-        // Subir a Cloudinary
         console.log("Iniciando subida a Cloudinary...");
         console.log("Variables de entorno:", {
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? "OK" : "MISSING",
@@ -180,7 +180,6 @@ router.post("/changeImage", verifyToken, upload.single("image"), async (req: Aut
             api_secret: process.env.CLOUDINARY_API_SECRET ? "OK" : "MISSING"
         });
         
-        const cloudinary = require('../config/cloudinary');
         const result = await cloudinary.uploader.upload(req.file.path, {
             folder: 'profile-images',
             transformation: [
