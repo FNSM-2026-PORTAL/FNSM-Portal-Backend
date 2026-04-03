@@ -173,6 +173,13 @@ router.post("/changeImage", verifyToken, upload.single("image"), async (req: Aut
         }
 
         // Subir a Cloudinary
+        console.log("Iniciando subida a Cloudinary...");
+        console.log("Variables de entorno:", {
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? "OK" : "MISSING",
+            api_key: process.env.CLOUDINARY_API_KEY ? "OK" : "MISSING",
+            api_secret: process.env.CLOUDINARY_API_SECRET ? "OK" : "MISSING"
+        });
+        
         const cloudinary = require('../config/cloudinary');
         const result = await cloudinary.uploader.upload(req.file.path, {
             folder: 'profile-images',
