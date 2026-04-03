@@ -6,6 +6,7 @@ import { upload } from "../middleware/upload";
 import { Post, Comment, Reaction } from "../models/Post";
 import path from "path";
 import fs from "fs";
+import cloudinary from "../config/cloudinary";
 
 const router = Router();
 
@@ -72,7 +73,7 @@ router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
             },
             time: post.createdAt,
             content: post.content,
-            image: post.image ? `/uploads/posts/${post.image}` : null,
+            image: post.image,
             likes: post.likes.length,
             userLiked: post.likes.includes(userId || ""),
             reactions: post.reactions.map(r => ({
@@ -130,7 +131,7 @@ router.get("/mine", verifyToken, async (req: AuthRequest, res: Response) => {
             },
             time: post.createdAt,
             content: post.content,
-            image: post.image ? `/uploads/posts/${post.image}` : null,
+            image: post.image,
             likes: post.likes.length,
             userLiked: post.likes.includes(userId || ""),
             reactions: post.reactions.map(r => ({
@@ -163,7 +164,7 @@ router.get("/mine", verifyToken, async (req: AuthRequest, res: Response) => {
 // ─────────────────────────────────────────────
 // POST /api/posts  →  Crear post
 // ─────────────────────────────────────────────
-router.post("/", verifyToken, uploadPost.single("image"), async (req: AuthRequest, res: Response) => {
+router.post("/", verifyToken, upload.single("image"), async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.userId;
         const { content } = req.body;
@@ -202,6 +203,18 @@ router.post("/", verifyToken, uploadPost.single("image"), async (req: AuthReques
         const avatar = (user.name as string).slice(0, 2).toUpperCase();
         const handle = "@" + (user.name as string).toLowerCase().replace(/\s+/g, "");
 
+        // Subir imagen a Cloudinary si existe
+        let imageUrl = null;
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'posts-images',
+                transformation: [
+                    { width: 800, height: 600, crop: 'limit' }
+                ]
+            });
+            imageUrl = result.secure_url;
+        }
+
         const newPost: Post = {
             authorId: userId!,
             authorName: user.name,
@@ -210,7 +223,7 @@ router.post("/", verifyToken, uploadPost.single("image"), async (req: AuthReques
             authorImage: user.profileImage,
             authorPlan: plan,
             content: content?.trim() || "",
-            image: req.file ? req.file.filename : undefined,
+            image: imageUrl,
             likes: [],
             reactions: [],
             comments: [],
@@ -224,7 +237,6 @@ router.post("/", verifyToken, uploadPost.single("image"), async (req: AuthReques
             post: {
                 id: result.insertedId,
                 ...newPost,
-                image: newPost.image ? `/uploads/posts/${newPost.image}` : null,
                 likes: 0,
                 userLiked: false,
                 isOwn: true,

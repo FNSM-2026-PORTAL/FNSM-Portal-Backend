@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-type Role = "admin" | "user";
+type Role = "admin" | "user" | "seller";
 
 export interface User {
     _id?: ObjectId;
