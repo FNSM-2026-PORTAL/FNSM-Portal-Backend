@@ -78,7 +78,7 @@ router.get("/my-packs", verifyToken, async (req: AuthRequest, res: Response) => 
             console.log(`equippedPack inválido limpiado para usuario ${userId}`);
         }
 
-        res.status(200).json({ ownedPacks, equippedPack, plan });
+        res.status(200).json({ plan, ownedPacks, equippedPack });
     } catch (error) {
         console.error("Error al obtener packs:", error);
         res.status(500).json({ message: "Error interno del servidor" });
