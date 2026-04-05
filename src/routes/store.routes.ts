@@ -1,54 +1,62 @@
-// src/routes/store.routes.ts
-import { Router } from "express";
-import { verifyToken } from "../middleware/auth"; // El que ya usas
-import multer from "multer";
-import { uploadToR2 } from "../services/r2Service"; // Tu lógica de R2
-import { getCollection } from "../db/db";
+import { Router, Response } from "express";
+import { mongoClient } from "../server";
+import { verifyToken, AuthRequest } from "../middleware/auth";
+import { upload } from "../middleware/upload";
+import { validateResource } from "../middleware/validateResource";
+import { createStoreSchema } from "../domain/validators/Store.schema";
+import { sendStoreNotification } from "../services/emailService";
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
 
-router.post("/", verifyToken, upload.single("logo"), async (req: any, res: any) => {
-    try {
-        const { name, description, category, venueType, lat, lng } = req.body;
+const getCollection = () => mongoClient.db("fnsm").collection("stores");
 
-        // 1. Validaciones básicas
-        if (!name || !lat || !lng) {
-            return res.status(400).json({ message: "Nombre y ubicación son obligatorios" });
+// POST /api/stores
+// verifyToken → validateResource → upload → handler
+// igual que Spring: @Valid antes del @RequestBody
+router.post(
+    "/",
+    verifyToken,
+    upload.single("photo"),
+    validateResource(createStoreSchema),
+    async (req: AuthRequest, res: Response) => {
+        try {
+            const { name, description, category, venueType, lat, lng } = req.body;
+
+            const logoUrl = req.file ? `/uploads/${req.file.filename}` : "";
+
+            const newStore = {
+                name,
+                description,
+                logo: logoUrl,
+                category,
+                venueType,
+                // GeoJSON igual que el modelo Store.ts
+                location: {
+                    type: "Point" as const,
+                    coordinates: [parseFloat(lng), parseFloat(lat)]
+                },
+                payment_status: {
+                    status: "FREE_TIER",
+                    isExpired: false,
+                },
+                status: "PENDIENTE",
+                ownerId: req.user?.userId,
+                createdAt: new Date()
+            };
+
+            await getCollection().insertOne(newStore);
+            await sendStoreNotification({ ...newStore, lat, lng });
+
+            res.status(201).json({
+                message: "Solicitud enviada correctamente",
+                store: newStore
+            });
+
+        } catch (error) {
+            console.error("Error al registrar negocio:", error);
+            res.status(500).json({ message: "Error interno del servidor" });
         }
-
-        // 2. Subir a R2 si hay archivo
-        let logoUrl = "";
-        if (req.file) {
-            logoUrl = await uploadToR2(req.file);
-        }
-
-        // 3. Guardar en MongoDB con status 'PENDIENTE'
-        const collection = getCollection("stores");
-        const newStore = {
-            name,
-            description,
-            category,
-            venueType,
-            lat: parseFloat(lat),
-            lng: parseFloat(lng),
-            logo: logoUrl,
-            status: "PENDIENTE", // <--- Clave para tu flujo de aprobación
-            ownerId: req.userId, // ID del usuario que lo registra
-            createdAt: new Date()
-        };
-
-        await collection.insertOne(newStore);
-
-        // 4. TODO: Aquí llamarías a tu servicio de Email (Nodemailer)
-        // enviarCorreoAviso(newStore);
-
-        res.status(201).json({ message: "Solicitud enviada correctamente", store: newStore });
-
-    } catch (error) {
-        console.error("Error al registrar negocio:", error);
-        res.status(500).json({ message: "Error interno del servidor" });
     }
-});
+);
 
 export default router;

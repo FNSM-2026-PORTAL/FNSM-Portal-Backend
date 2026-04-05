@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import webhookRoutes from "./routes/webhook.routes";
 import postRoutes from "./routes/post.routes";
+import storeRoutes from "./routes/store.routes";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
@@ -24,7 +26,10 @@ app.use(cors({
 app.use("/api/webhook", webhookRoutes);
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 👇 QUITA el urlencoded — multer maneja el multipart, 
+// urlencoded interfiere con form-data
+// app.use(express.urlencoded({ extended: true })); 
+
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (req, res) => {
@@ -34,25 +39,23 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/stores", storeRoutes);
 
-if (!process.env.MONGODB_URI) {
-    throw new Error("Please provide a MongoDB URI");
-}
+app.use(errorHandler); 
 
-export const mongoClient = new MongoClient(process.env.MONGODB_URI);
+
+export const mongoClient = new MongoClient(process.env.MONGODB_URI!);
 
 async function start() {
     try {
         await mongoClient.connect();
         console.log("MongoDB conectado");
-
         app.listen(PORT, () => {
             console.log(`Servidor corriendo en el puerto ${PORT}`);
         });
-
     } catch (error) {
         console.error("Error al conectar a la base de datos:", error);
-        process.exit(1)
+        process.exit(1);
     }
 }
 
