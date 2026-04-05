@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { mongoClient } from "../server";
 import { ObjectId } from "mongodb";
 import express from "express";
+import { PackId, ALL_PACKS } from "../models/User";
 
 const router = Router();
 
@@ -16,6 +17,15 @@ const getStripe = () => {
     return stripe;
 };
 
+/**
+ * Selecciona un pack al azar de los que el usuario NO tiene todavía.
+ * Si ya tiene todos, retorna null.
+ */
+function getRandomPackForUser(ownedPacks: PackId[]): PackId | null {
+    const available = ALL_PACKS.filter(p => !ownedPacks.includes(p));
+    if (available.length === 0) return null;
+    return available[Math.floor(Math.random() * available.length)];
+}
 
 router.post("/", express.raw({ type: "application/json" }), async (req: Request, res: Response) => {
     const signature = req.headers["stripe-signature"] as string;
@@ -36,32 +46,88 @@ router.post("/", express.raw({ type: "application/json" }), async (req: Request,
 
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.client_reference_id;
+        const metadata = session.metadata || {};
 
-        const userId = session.client_reference_id; 
+        if (!userId) {
+            res.status(200).json({ received: true });
+            return;
+        }
 
-        if (userId) {
-            const amount_total = session.amount_total;
-            let plan = null;
+        const collection = mongoClient.db("fnsm").collection("users");
 
-            if (amount_total === 1000) {
-                plan = "plata";
-            } else if (amount_total === 5000) {
-                plan = "plata";
-            } else if (amount_total === 7500) {
-                plan = "oro";
+        // ── CASO 1: Compra de pack individual ──────────────────────────────
+        if (metadata.type === "pack_purchase" && metadata.packId) {
+            const packId = metadata.packId as PackId;
+            try {
+                await collection.updateOne(
+                    { _id: new ObjectId(userId) },
+                    { $addToSet: { ownedPacks: packId } }
+                );
+                console.log(`Pack '${packId}' añadido a usuario ${userId}`);
+            } catch (dbError) {
+                console.error("Error al registrar pack comprado:", dbError);
             }
 
-            if (plan) {
-                try {
-                    const collection = mongoClient.db("fnsm").collection("users");
+            res.status(200).json({ received: true });
+            return;
+        }
+
+        // ── CASO 2: Compra de plan de suscripción ──────────────────────────
+        const amount_total = session.amount_total;
+        let plan: string | null = null;
+
+        if (amount_total === 5000) {
+            plan = "plata"; // $50 pesos
+        } else if (amount_total === 7500) {
+            plan = "oro";   // $75 pesos
+        }
+
+        if (plan) {
+            try {
+                const user = await collection.findOne({ _id: new ObjectId(userId) });
+                const ownedPacks: PackId[] = (user?.ownedPacks as PackId[]) || [];
+
+                const updateFields: Record<string, any> = {
+                    plan,
+                    hasLifetimeAccess: true,
+                };
+
+                if (plan === "plata") {
+                    // Asignar 1 pack al azar (de los que aún no tiene)
+                    const randomPack = getRandomPackForUser(ownedPacks);
+                    if (randomPack) {
+                        await collection.updateOne(
+                            { _id: new ObjectId(userId) },
+                            {
+                                $set: updateFields,
+                                $addToSet: { ownedPacks: randomPack }
+                            }
+                        );
+                        console.log(`Usuario ${userId} → plan plata | pack regalo: '${randomPack}'`);
+                    } else {
+                        // Ya tiene todos los packs, solo actualizar plan
+                        await collection.updateOne(
+                            { _id: new ObjectId(userId) },
+                            { $set: updateFields }
+                        );
+                        console.log(`Usuario ${userId} → plan plata (ya tenía todos los packs)`);
+                    }
+                } else if (plan === "oro") {
+                    // Asignar todos los packs
                     await collection.updateOne(
                         { _id: new ObjectId(userId) },
-                        { $set: { plan: plan, hasLifetimeAccess: true } }
+                        {
+                            $set: {
+                                ...updateFields,
+                                ownedPacks: ALL_PACKS
+                            }
+                        }
                     );
-                    console.log(`Usuario ${userId} actualizado a plan ${plan} vitalicio con éxito en MongoDB.`);
-                } catch (dbError) {
-                    console.error("Error al actualizar la base de datos tras pago:", dbError);
+                    console.log(`Usuario ${userId} → plan oro | todos los packs asignados`);
                 }
+            } catch (dbError) {
+                console.error("Error al actualizar plan/packs:", dbError);
             }
         }
     }

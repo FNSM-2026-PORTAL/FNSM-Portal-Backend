@@ -28,6 +28,7 @@ export interface Post {
     authorPlan: "free" | "plata" | "oro";
     content: string;
     image?: string;
+    marco?: string | null;
     likes: string[];
     reactions: Reaction[];
     comments: Comment[];

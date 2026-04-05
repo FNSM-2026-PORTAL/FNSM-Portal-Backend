@@ -15,8 +15,8 @@ const getStripe = () => {
 };
 
 const PLAN_PRICES = {
-    plata: 10 * 100,  // $10 pesos
-    oro: 10 * 100     // $10 pesos
+    plata: 50 * 100,  // $50 pesos
+    oro: 75 * 100     // $75 pesos
 };
 
 router.post("/create-checkout-session", verifyToken, async (req: AuthRequest, res: Response) => {
@@ -49,7 +49,7 @@ router.post("/create-checkout-session", verifyToken, async (req: AuthRequest, re
             ],
             mode: "payment",
             success_url: `${process.env.FRONTEND_URL}/success`,
-            cancel_url: `${process.env.FRONTEND_URL}/suscripciones`,
+            cancel_url: `${process.env.FRONTEND_URL}/perfil`,
             client_reference_id: req.user?.userId
         });
 

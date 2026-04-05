@@ -74,6 +74,7 @@ router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
             time: post.createdAt,
             content: post.content,
             image: post.image,
+            marco: post.marco ?? null,
             likes: post.likes.length,
             userLiked: post.likes.includes(userId || ""),
             reactions: post.reactions.map(r => ({
@@ -132,6 +133,7 @@ router.get("/mine", verifyToken, async (req: AuthRequest, res: Response) => {
             time: post.createdAt,
             content: post.content,
             image: post.image,
+            marco: post.marco ?? null,
             likes: post.likes.length,
             userLiked: post.likes.includes(userId || ""),
             reactions: post.reactions.map(r => ({
@@ -168,6 +170,7 @@ router.post("/", verifyToken, upload.single("image"), async (req: AuthRequest, r
     try {
         const userId = req.user?.userId;
         const { content } = req.body;
+        const marco = req.body.marco || null;
 
         if (!content?.trim() && !req.file) {
             res.status(400).json({ message: "El post debe tener contenido o imagen." });
@@ -224,6 +227,7 @@ router.post("/", verifyToken, upload.single("image"), async (req: AuthRequest, r
             authorPlan: plan,
             content: content?.trim() || "",
             image: imageUrl,
+            marco: marco,
             likes: [],
             reactions: [],
             comments: [],
@@ -237,6 +241,7 @@ router.post("/", verifyToken, upload.single("image"), async (req: AuthRequest, r
             post: {
                 id: result.insertedId,
                 ...newPost,
+                marco: newPost.marco ?? null,
                 likes: 0,
                 userLiked: false,
                 isOwn: true,
