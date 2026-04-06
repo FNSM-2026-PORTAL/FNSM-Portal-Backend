@@ -85,9 +85,7 @@ router.get("/my-packs", verifyToken, async (req: AuthRequest, res: Response) => 
     }
 });
 
-// POST /api/store/buy
-// Crea una sesión de Stripe para comprar un pack ($25)
-// Disponible para usuarios free y plata (solo packs que no poseen)
+
 router.post("/buy", verifyToken, async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.userId;
